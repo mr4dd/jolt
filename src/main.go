@@ -14,7 +14,6 @@ import (
 
 func main() {
 	API_KEY := getAPIKey()
-	fmt.Println(API_KEY)
 
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(API_KEY))
@@ -38,7 +37,20 @@ func main() {
 
 
 	cs := model.StartChat()
-
+	cs.History = []*genai.Content{
+		&genai.Content{
+		    Parts: []genai.Part{
+		      genai.Text("you're a virtual assistant helping users from their terminal."),
+		    },
+		    Role: "user",
+		  },
+		  &genai.Content{
+		    Parts: []genai.Part{
+		      genai.Text("Hello, how may I assiste you today"),
+		    },
+		    Role: "model",
+		  },
+	}
 	loop(cs, ctx)
 }
 
@@ -89,14 +101,15 @@ func loop(cs *genai.ChatSession, ctx context.Context) {
 }
 
 func parseAndPrint(resp *genai.GenerateContentResponse){
-	cand := resp.Candidates[0]
-
-	if cand.Content != nil {
-		for _, part := range cand.Content.Parts {
-			stringPart := toString(part)
-			mdParsed := mdparse.Parse(stringPart)
-			fmt.Print(mdParsed)
-		}	
+	for _, cand := range resp.Candidates{
+		if cand.Content != nil {
+			for _, part := range cand.Content.Parts {
+				stringPart := toString(part)
+				mdParsed := mdparse.Parse(stringPart)
+				fmt.Print(mdParsed)
+				os.Stdout.Sync()
+			}	
+		}
 	}
 
 

@@ -2,16 +2,16 @@ package mdparse
 
 
 
-var new_string string = ""
 var bold_ansi string = "\033[1m"
 var underline_ansi string = "\033[4m"
 var reset_ansi string = "\033[m"
 var block string = "█"
 var working int 
 var skip_next int
-
+var new_string string = ""
 
 func Parse(content string) (string){
+	new_string = ""
 	working = 0
 	skip_next = 0
 
