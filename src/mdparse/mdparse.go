@@ -1,76 +1,73 @@
+
 package mdparse
 
+import (
+	"strings"
+)
 
+const (
+	boldAnsi      = "\033[1m"
+	underlineAnsi = "\033[4m"
+	resetAnsi     = "\033[0m"
+	block         = "█"
+)
 
-var bold_ansi string = "\033[1m"
-var underline_ansi string = "\033[4m"
-var reset_ansi string = "\033[m"
-var block string = "█"
-var working int 
-var skip_next int
-var new_string string = ""
+func Parse(content string) string {
+	var result strings.Builder
+	length := len(content)
 
-func Parse(content string) (string){
-	new_string = ""
-	working = 0
-	skip_next = 0
+	boldActive := false
+	underlineActive := false
 
-	for i, part := range content {
-		if i+1 >= len(content) {
-			new_string += string(content[i])
-			continue
+	for i := 0; i < length; i++ {
+		char := content[i]
+
+				nextChar := byte(0)
+		if i+1 < length {
+			nextChar = content[i+1]
 		}
-		if part == '*' && rune(content[i+1]) == part {		
-			if skip_next == 1 {
-				continue
+
+		switch char {
+		case '*', '_': 			if nextChar == char { 				if hasClosing(content, i, "**") {
+					boldActive = !boldActive
+					if boldActive {
+						result.WriteString(boldAnsi)
+					} else {
+						result.WriteString(resetAnsi)
+					}
+					i++ 				} else {
+					result.WriteByte(char)
+				}
+			} else { 				if hasClosing(content, i, string(char)) {
+					underlineActive = !underlineActive
+					if underlineActive {
+						result.WriteString(underlineAnsi)
+					} else {
+						result.WriteString(resetAnsi)
+					}
+				} else {
+					result.WriteByte(char)
+				}
 			}
-			Bold()
-		} else if part == '*' && rune(content[i+1]) != part {
-			if skip_next == 1 {
-				continue
+
+		case '>': 			if nextChar == ' ' {
+				result.WriteString(block + " ")
+				i++ 			} else if nextChar == '>' { 				result.WriteString(block + block)
+				i++
+			} else {
+				result.WriteByte(char)
 			}
-			Underline()
-		} else if part == '_' && rune(content[i+1]) == part {
-			if skip_next == 1 {
-				continue
-			}
-			Bold()
-		} else if part == '_' && rune(content[i+1]) != part {
-			if skip_next == 1 {
-				continue
-			}
-			Underline()
-		} else if part == '>' && rune(content[i+1]) == ' ' {
-			new_string += block
-		} else if part == '>' && rune(content[i+1]) == part {
-			new_string += block + block
-		} else {
-			new_string += string(part)
+
+		default:
+			result.WriteByte(char)
 		}
 	}
-	return new_string+reset_ansi
+
+		result.WriteString(resetAnsi)
+
+	return result.String()
 }
 
-func Bold(){
-	if working == 0 {
-		working = 1
-		skip_next = 1
-		new_string += bold_ansi
-	} else if working == 1 {
-		working = 0
-		new_string += reset_ansi
-		skip_next = 1
-	}
-}
-
-func Underline() {
-	if working == 0 {
-		working = 1
-		skip_next = 1
-		new_string += underline_ansi
-	} else if working == 1 {
-		working = 0
-		new_string += reset_ansi
-		skip_next = 1
-	}
+func hasClosing(content string, start int, marker string) bool {
+	return strings.Contains(content[start+len(marker):], marker)
 }

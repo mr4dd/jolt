@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	model := client.GenerativeModel("gemini-pro")
+	model := client.GenerativeModel("gemini-1.5-flash")
 	
 	
 	model.SafetySettings = []*genai.SafetySetting{
